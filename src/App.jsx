@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 const initialOrders = [
@@ -29,7 +29,14 @@ const initialOrders = [
 ]
 
 function App() {
-  const [orders, setOrders] = useState(initialOrders)
+  const [orders, setOrders] = useState(() => {
+  const savedOrders = localStorage.getItem('client-orders')
+
+  return savedOrders ? JSON.parse(savedOrders) : initialOrders
+})
+useEffect(() => {
+  localStorage.setItem('client-orders', JSON.stringify(orders))
+}, [orders])
   const [isFormOpen, setIsFormOpen] = useState(false)
 
   const [formData, setFormData] = useState({
