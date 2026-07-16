@@ -1,5 +1,32 @@
 import './App.css'
 
+const orders = [
+  {
+    id: '#ORD-1001',
+    client: 'Lina Ahmad',
+    service: 'Website Design',
+    date: 'Jul 14, 2026',
+    amount: '$450',
+    status: 'Pending',
+  },
+  {
+    id: '#ORD-1002',
+    client: 'Omar Khaled',
+    service: 'Landing Page',
+    date: 'Jul 13, 2026',
+    amount: '$280',
+    status: 'Completed',
+  },
+  {
+    id: '#ORD-1003',
+    client: 'Sara Ali',
+    service: 'Dashboard UI',
+    date: 'Jul 12, 2026',
+    amount: '$620',
+    status: 'In Progress',
+  },
+]
+
 function App() {
   return (
     <main className="dashboard">
@@ -43,9 +70,40 @@ function App() {
           <button className="secondary-button">View All</button>
         </div>
 
-        <div className="empty-state">
-          <h3>No orders yet</h3>
-          <p>Your recent client orders will appear here.</p>
+        <div className="table-wrapper">
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Client</th>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td>{order.id}</td>
+                  <td>{order.client}</td>
+                  <td>{order.service}</td>
+                  <td>{order.date}</td>
+                  <td>{order.amount}</td>
+                  <td>
+                    <span
+                      className={`status-badge ${order.status
+                        .toLowerCase()
+                        .replace(' ', '-')}`}
+                    >
+                      {order.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </main>
