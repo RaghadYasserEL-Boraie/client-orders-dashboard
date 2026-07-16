@@ -40,6 +40,7 @@ function App() {
   }, [orders])
 
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingOrderId, setEditingOrderId] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
 
@@ -51,6 +52,35 @@ function App() {
   })
 
   const [errors, setErrors] = useState({})
+
+  const resetForm = () => {
+    setFormData({
+      client: '',
+      service: '',
+      amount: '',
+      status: 'Pending',
+    })
+    setErrors({})
+    setEditingOrderId(null)
+  }
+
+  const openOrderForm = (order = null) => {
+    setIsFormOpen(true)
+    setErrors({})
+
+    if (order) {
+      setEditingOrderId(order.id)
+      setFormData({
+        client: order.client,
+        service: order.service,
+        amount: order.amount.replace('$', ''),
+        status: order.status,
+      })
+      return
+    }
+
+    resetForm()
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -95,6 +125,16 @@ function App() {
     return Object.keys(newErrors).length === 0
   }
 
+  const getNextOrderId = () => {
+    const numericIds = orders
+      .map((order) => Number(order.id.replace('#ORD-', '')))
+      .filter((value) => Number.isFinite(value))
+
+    const highestId = numericIds.length > 0 ? Math.max(...numericIds) : 1000
+
+    return `#ORD-${highestId + 1}`
+  }
+
   const handleSubmit = (event) => {
     event.preventDefault()
 
@@ -104,49 +144,60 @@ function App() {
       return
     }
 
-    const newOrder = {
-      id: `#ORD-${1001 + orders.length}`,
-      client: formData.client.trim(),
-      service: formData.service.trim(),
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-      amount: `$${formData.amount}`,
-      status: formData.status,
+    if (editingOrderId) {
+      setOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order.id === editingOrderId
+            ? {
+                ...order,
+                client: formData.client.trim(),
+                service: formData.service.trim(),
+                amount: `$${formData.amount}`,
+                status: formData.status,
+              }
+            : order
+        )
+      )
+    } else {
+      const newOrder = {
+        id: getNextOrderId(),
+        client: formData.client.trim(),
+        service: formData.service.trim(),
+        date: new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        amount: `$${formData.amount}`,
+        status: formData.status,
+      }
+
+      setOrders((currentOrders) => [newOrder, ...currentOrders])
     }
 
-    setOrders((currentOrders) => [newOrder, ...currentOrders])
-
-    setFormData({
-      client: '',
-      service: '',
-      amount: '',
-      status: 'Pending',
-    })
-
-    setErrors({})
+    resetForm()
     setIsFormOpen(false)
   }
-const handleDeleteOrder = (orderId) => {
-  const shouldDelete = window.confirm(
-    'Are you sure you want to delete this order?'
-  )
 
-  if (!shouldDelete) {
-    return
+  const handleDeleteOrder = (orderId) => {
+    const shouldDelete = window.confirm(
+      'Are you sure you want to delete this order?'
+    )
+
+    if (!shouldDelete) {
+      return
+    }
+
+    setOrders((currentOrders) =>
+      currentOrders.filter((order) => order.id !== orderId)
+    )
   }
-
-  setOrders((currentOrders) =>
-    currentOrders.filter((order) => order.id !== orderId)
-  )
-}
   const closeForm = () => {
     setIsFormOpen(false)
-    setErrors({})
+    resetForm()
   }
 
+  const isEditing = editingOrderId !== null
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -175,7 +226,7 @@ const handleDeleteOrder = (orderId) => {
 
         <button
           className="primary-button"
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => openOrderForm()}
         >
           + New Order
         </button>
@@ -208,7 +259,7 @@ const handleDeleteOrder = (orderId) => {
       {isFormOpen && (
         <section className="order-form-section">
           <div className="section-heading">
-            <h2>Add New Order</h2>
+            <h2>{isEditing ? 'Edit Order' : 'Add New Order'}</h2>
 
             <button
               className="close-button"
@@ -287,7 +338,7 @@ const handleDeleteOrder = (orderId) => {
             </label>
 
             <button className="primary-button form-submit" type="submit">
-              Add Order
+              {isEditing ? 'Save Changes' : 'Add Order'}
             </button>
           </form>
         </section>
@@ -357,13 +408,22 @@ const handleDeleteOrder = (orderId) => {
                       </span>
                     </td>
                     <td>
-                      <button
-                        className="delete-button"
-                        type="button"
-                        onClick={() => handleDeleteOrder(order.id)}
-                      >
-                        Delete
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          className="edit-button"
+                          type="button"
+                          onClick={() => openOrderForm(order)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="delete-button"
+                          type="button"
+                          onClick={() => handleDeleteOrder(order.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
