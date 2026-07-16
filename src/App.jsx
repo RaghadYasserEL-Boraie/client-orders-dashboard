@@ -30,14 +30,18 @@ const initialOrders = [
 
 function App() {
   const [orders, setOrders] = useState(() => {
-  const savedOrders = localStorage.getItem('client-orders')
+    const savedOrders = localStorage.getItem('client-orders')
 
-  return savedOrders ? JSON.parse(savedOrders) : initialOrders
-})
-useEffect(() => {
-  localStorage.setItem('client-orders', JSON.stringify(orders))
-}, [orders])
+    return savedOrders ? JSON.parse(savedOrders) : initialOrders
+  })
+
+  useEffect(() => {
+    localStorage.setItem('client-orders', JSON.stringify(orders))
+  }, [orders])
+
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
 
   const [formData, setFormData] = useState({
     client: '',
@@ -142,6 +146,21 @@ const handleDeleteOrder = (orderId) => {
     setIsFormOpen(false)
     setErrors({})
   }
+
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      [order.id, order.client, order.service]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch)
+
+    const matchesStatus =
+      statusFilter === 'All' || order.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <main className="dashboard">
@@ -280,6 +299,31 @@ const handleDeleteOrder = (orderId) => {
           <button className="secondary-button">View All</button>
         </div>
 
+        <div className="orders-toolbar">
+          <label className="search-field">
+            <span className="sr-only">Search orders</span>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by client, service or order ID"
+            />
+          </label>
+
+          <label className="filter-field">
+            <span>Status</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </label>
+        </div>
+
         <div className="table-wrapper">
           <table className="orders-table">
             <thead>
@@ -295,33 +339,44 @@ const handleDeleteOrder = (orderId) => {
             </thead>
 
             <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.id}</td>
-                  <td>{order.client}</td>
-                  <td>{order.service}</td>
-                  <td>{order.date}</td>
-                  <td>{order.amount}</td>
-                  <td>
-                    <span
-                      className={`status-badge ${order.status
-                        .toLowerCase()
-                        .replace(' ', '-')}`}
-                    >
-                      {order.status}
-                    </span>
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.id}</td>
+                    <td>{order.client}</td>
+                    <td>{order.service}</td>
+                    <td>{order.date}</td>
+                    <td>{order.amount}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${order.status
+                          .toLowerCase()
+                          .replace(' ', '-')}`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="delete-button"
+                        type="button"
+                        onClick={() => handleDeleteOrder(order.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7">
+                    <div className="empty-state">
+                      <h3>No matching orders</h3>
+                      <p>Try another search term or status filter.</p>
+                    </div>
                   </td>
-                  <td>
-  <button
-    className="delete-button"
-    type="button"
-    onClick={() => handleDeleteOrder(order.id)}
-  >
-    Delete
-  </button>
-</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
