@@ -316,3 +316,17 @@ button {
   font-size: 12px;
   font-weight: 600;
 }
+.delete-button {
+  padding: 8px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background: #fee2e2;
+}

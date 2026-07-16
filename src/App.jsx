@@ -125,7 +125,19 @@ useEffect(() => {
     setErrors({})
     setIsFormOpen(false)
   }
+const handleDeleteOrder = (orderId) => {
+  const shouldDelete = window.confirm(
+    'Are you sure you want to delete this order?'
+  )
 
+  if (!shouldDelete) {
+    return
+  }
+
+  setOrders((currentOrders) =>
+    currentOrders.filter((order) => order.id !== orderId)
+  )
+}
   const closeForm = () => {
     setIsFormOpen(false)
     setErrors({})
@@ -278,6 +290,7 @@ useEffect(() => {
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
 
@@ -298,6 +311,15 @@ useEffect(() => {
                       {order.status}
                     </span>
                   </td>
+                  <td>
+  <button
+    className="delete-button"
+    type="button"
+    onClick={() => handleDeleteOrder(order.id)}
+  >
+    Delete
+  </button>
+</td>
                 </tr>
               ))}
             </tbody>
