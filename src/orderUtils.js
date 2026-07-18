@@ -1,3 +1,5 @@
+const STORAGE_KEY = 'client-orders-dashboard-orders'
+
 export const validateOrderForm = (formData) => {
   const newErrors = {}
   const namePattern = /^[A-Za-z\u0600-\u06FF\s]+$/
@@ -57,6 +59,45 @@ export const getNextOrderId = (orders) => {
   const highestId = numericIds.length > 0 ? Math.max(...numericIds) : 1000
 
   return `#ORD-${highestId + 1}`
+}
+
+export const saveOrdersToStorage = (orders, storage = window.localStorage) => {
+  if (!storage) {
+    return
+  }
+
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(orders))
+  } catch {
+    // Ignore storage write failures and keep the in-memory orders intact.
+  }
+}
+
+export const loadOrdersFromStorage = (
+  storage = window.localStorage,
+  fallbackOrders = []
+) => {
+  if (!storage) {
+    return fallbackOrders
+  }
+
+  try {
+    const storedValue = storage.getItem(STORAGE_KEY)
+
+    if (storedValue === null || storedValue === '') {
+      return fallbackOrders
+    }
+
+    const parsedValue = JSON.parse(storedValue)
+
+    if (!Array.isArray(parsedValue)) {
+      return fallbackOrders
+    }
+
+    return parsedValue
+  } catch {
+    return fallbackOrders
+  }
 }
 
 export const formatOrderDate = (value) => {

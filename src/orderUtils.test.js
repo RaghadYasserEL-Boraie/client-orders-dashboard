@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getNextOrderId, validateOrderForm } from './orderUtils.js'
+import {
+  getNextOrderId,
+  loadOrdersFromStorage,
+  saveOrdersToStorage,
+  validateOrderForm,
+} from './orderUtils.js'
 
 test('generates the next sequential order ID', () => {
   const orders = [{ id: '#ORD-1001' }, { id: '#ORD-1002' }, { id: '#ORD-1003' }]
@@ -47,4 +52,46 @@ test('rejects dates with invalid year formats or dates before 2000', () => {
     }).date,
     'Date must be a valid date with a 4-digit year and not earlier than 2000.'
   )
+})
+
+test('loads valid saved orders from storage', () => {
+  const storage = {
+    getItem: () => JSON.stringify([{ id: '#ORD-2001', client: 'Ava', service: 'SEO', date: 'Jan 4, 2025', amount: '$300', status: 'Pending' }]),
+    setItem: () => {},
+  }
+
+  const orders = loadOrdersFromStorage(storage)
+
+  assert.equal(orders.length, 1)
+  assert.equal(orders[0].id, '#ORD-2001')
+})
+
+test('falls back to the default orders when storage data is invalid', () => {
+  const storage = {
+    getItem: () => '{bad json',
+    setItem: () => {},
+  }
+
+  const defaultOrders = [{ id: '#ORD-1001' }, { id: '#ORD-1002' }]
+  const orders = loadOrdersFromStorage(storage, defaultOrders)
+
+  assert.equal(orders.length, 2)
+  assert.equal(orders[0].id, '#ORD-1001')
+})
+
+test('saves orders to the dashboard storage key', () => {
+  const writes = []
+  const storage = {
+    getItem: () => null,
+    setItem: (key, value) => {
+      writes.push([key, value])
+    },
+  }
+
+  const orders = [{ id: '#ORD-2002', client: 'Noah', service: 'Audit', date: 'Jan 5, 2025', amount: '$150', status: 'Completed' }]
+
+  saveOrdersToStorage(orders, storage)
+
+  assert.equal(writes[0][0], 'client-orders-dashboard-orders')
+  assert.equal(writes[0][1], JSON.stringify(orders))
 })

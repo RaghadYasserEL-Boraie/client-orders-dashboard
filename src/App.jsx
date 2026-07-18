@@ -4,6 +4,8 @@ import {
   formatDateInputValue,
   formatOrderDate,
   getNextOrderId,
+  loadOrdersFromStorage,
+  saveOrdersToStorage,
   validateOrderForm,
 } from './orderUtils'
 
@@ -36,13 +38,11 @@ const initialOrders = [
 
 function App() {
   const [orders, setOrders] = useState(() => {
-    const savedOrders = localStorage.getItem('client-orders')
-
-    return savedOrders ? JSON.parse(savedOrders) : initialOrders
+    return loadOrdersFromStorage(window.localStorage, initialOrders)
   })
 
   useEffect(() => {
-    localStorage.setItem('client-orders', JSON.stringify(orders))
+    saveOrdersToStorage(orders)
   }, [orders])
 
   const [isFormOpen, setIsFormOpen] = useState(false)
