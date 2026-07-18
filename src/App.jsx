@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import {
+  formatDateInputValue,
+  formatOrderDate,
+  getNextOrderId,
+  validateOrderForm,
+} from './orderUtils'
 
 const initialOrders = [
   {
@@ -48,6 +54,7 @@ function App() {
   const [formData, setFormData] = useState({
     client: '',
     service: '',
+    date: '',
     amount: '',
     status: 'Pending',
   })
@@ -58,6 +65,7 @@ function App() {
     setFormData({
       client: '',
       service: '',
+      date: '',
       amount: '',
       status: 'Pending',
     })
@@ -74,6 +82,7 @@ function App() {
       setFormData({
         client: order.client,
         service: order.service,
+        date: formatDateInputValue(order.date),
         amount: order.amount.replace('$', ''),
         status: order.status,
       })
@@ -98,42 +107,11 @@ function App() {
   }
 
   const validateForm = () => {
-    const newErrors = {}
-    const namePattern = /^[A-Za-z\u0600-\u06FF\s]+$/
-
-    if (!formData.client.trim()) {
-      newErrors.client = 'Client name is required.'
-    } else if (formData.client.trim().length < 3) {
-      newErrors.client = 'Client name must be at least 3 characters.'
-    } else if (!namePattern.test(formData.client.trim())) {
-      newErrors.client = 'Client name can only contain letters and spaces.'
-    }
-
-    if (!formData.service.trim()) {
-      newErrors.service = 'Service is required.'
-    } else if (formData.service.trim().length < 3) {
-      newErrors.service = 'Service must be at least 3 characters.'
-    }
-
-    if (!formData.amount) {
-      newErrors.amount = 'Amount is required.'
-    } else if (Number(formData.amount) <= 0) {
-      newErrors.amount = 'Amount must be greater than zero.'
-    }
+    const newErrors = validateOrderForm(formData)
 
     setErrors(newErrors)
 
     return Object.keys(newErrors).length === 0
-  }
-
-  const getNextOrderId = () => {
-    const numericIds = orders
-      .map((order) => Number(order.id.replace('#ORD-', '')))
-      .filter((value) => Number.isFinite(value))
-
-    const highestId = numericIds.length > 0 ? Math.max(...numericIds) : 1000
-
-    return `#ORD-${highestId + 1}`
   }
 
   const handleSubmit = (event) => {
@@ -153,6 +131,7 @@ function App() {
                 ...order,
                 client: formData.client.trim(),
                 service: formData.service.trim(),
+                date: formatOrderDate(formData.date),
                 amount: `$${formData.amount}`,
                 status: formData.status,
               }
@@ -161,14 +140,10 @@ function App() {
       )
     } else {
       const newOrder = {
-        id: getNextOrderId(),
+        id: getNextOrderId(orders),
         client: formData.client.trim(),
         service: formData.service.trim(),
-        date: new Date().toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
+        date: formatOrderDate(formData.date),
         amount: `$${formData.amount}`,
         status: formData.status,
       }
@@ -251,12 +226,6 @@ function App() {
           </p>
         </div>
 
-        <button
-          className="primary-button"
-          onClick={() => openOrderForm()}
-        >
-          + New Order
-        </button>
       </header>
 
       <section className="stats-grid">
@@ -284,97 +253,135 @@ function App() {
       </section>
 
       {isFormOpen && (
-        <section className="order-form-section">
-          <div className="section-heading">
-            <h2>{isEditing ? 'Edit Order' : 'Add New Order'}</h2>
+        <div className="modal-backdrop" role="presentation" onClick={closeForm}>
+          <section
+            className="order-form-section modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-form-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="section-heading">
+              <h2 id="order-form-title">
+                {isEditing ? 'Edit Order' : 'Add New Order'}
+              </h2>
 
-            <button
-              className="close-button"
-              type="button"
-              onClick={closeForm}
-            >
-              ×
-            </button>
-          </div>
-
-          <form className="order-form" onSubmit={handleSubmit} noValidate>
-            <label>
-              Client Name
-
-              <input
-                className={errors.client ? 'input-error' : ''}
-                type="text"
-                name="client"
-                value={formData.client}
-                onChange={handleChange}
-                placeholder="Enter client name"
-              />
-
-              {errors.client && (
-                <span className="error-message">{errors.client}</span>
-              )}
-            </label>
-
-            <label>
-              Service
-
-              <input
-                className={errors.service ? 'input-error' : ''}
-                type="text"
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                placeholder="Enter service"
-              />
-
-              {errors.service && (
-                <span className="error-message">{errors.service}</span>
-              )}
-            </label>
-
-            <label>
-              Amount
-
-              <input
-                className={errors.amount ? 'input-error' : ''}
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                placeholder="Enter amount"
-                min="1"
-              />
-
-              {errors.amount && (
-                <span className="error-message">{errors.amount}</span>
-              )}
-            </label>
-
-            <label>
-              Status
-
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
+              <button
+                className="close-button"
+                type="button"
+                onClick={closeForm}
               >
-                <option>Pending</option>
-                <option>In Progress</option>
-                <option>Completed</option>
-              </select>
-            </label>
+                ×
+              </button>
+            </div>
 
-            <button className="primary-button form-submit" type="submit">
-              {isEditing ? 'Save Changes' : 'Add Order'}
-            </button>
-          </form>
-        </section>
+            <form className="order-form" onSubmit={handleSubmit} noValidate>
+              <label>
+                Client Name
+
+                <input
+                  className={errors.client ? 'input-error' : ''}
+                  type="text"
+                  name="client"
+                  value={formData.client}
+                  onChange={handleChange}
+                  placeholder="Enter client name"
+                />
+
+                {errors.client && (
+                  <span className="error-message">{errors.client}</span>
+                )}
+              </label>
+
+              <label>
+                Service
+
+                <input
+                  className={errors.service ? 'input-error' : ''}
+                  type="text"
+                  name="service"
+                  value={formData.service}
+                  onChange={handleChange}
+                  placeholder="Enter service"
+                />
+
+                {errors.service && (
+                  <span className="error-message">{errors.service}</span>
+                )}
+              </label>
+
+              <label>
+                Date
+
+                <input
+                  className={errors.date ? 'input-error' : ''}
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                />
+
+                {errors.date && (
+                  <span className="error-message">{errors.date}</span>
+                )}
+              </label>
+
+              <label>
+                Amount
+
+                <input
+                  className={errors.amount ? 'input-error' : ''}
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  placeholder="Enter amount"
+                  min="1"
+                />
+
+                {errors.amount && (
+                  <span className="error-message">{errors.amount}</span>
+                )}
+              </label>
+
+              <label>
+                Status
+
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                >
+                  <option>Pending</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                </select>
+              </label>
+
+              <button className="primary-button form-submit" type="submit">
+                {isEditing ? 'Save Changes' : 'Add Order'}
+              </button>
+            </form>
+          </section>
+        </div>
       )}
 
       <section className="orders-section">
         <div className="section-heading">
           <h2>Recent Orders</h2>
-          <button className="secondary-button">View All</button>
+
+          <div className="section-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => openOrderForm()}
+            >
+              Add Order
+            </button>
+            <button className="secondary-button" type="button">
+              View All
+            </button>
+          </div>
         </div>
 
         <div className="orders-toolbar">
