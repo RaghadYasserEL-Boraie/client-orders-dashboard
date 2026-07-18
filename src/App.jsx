@@ -43,6 +43,7 @@ function App() {
   const [editingOrderId, setEditingOrderId] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [sortOption, setSortOption] = useState('newest-first')
 
   const [formData, setFormData] = useState({
     client: '',
@@ -213,6 +214,32 @@ function App() {
     return matchesSearch && matchesStatus
   })
 
+  const sortedOrders = [...filteredOrders].sort((firstOrder, secondOrder) => {
+    if (sortOption === 'oldest-first') {
+      return new Date(firstOrder.date) - new Date(secondOrder.date)
+    }
+
+    if (sortOption === 'amount-low-to-high') {
+      return (
+        Number(firstOrder.amount.replace('$', '')) -
+        Number(secondOrder.amount.replace('$', ''))
+      )
+    }
+
+    if (sortOption === 'amount-high-to-low') {
+      return (
+        Number(secondOrder.amount.replace('$', '')) -
+        Number(firstOrder.amount.replace('$', ''))
+      )
+    }
+
+    if (sortOption === 'client-name-az') {
+      return firstOrder.client.localeCompare(secondOrder.client)
+    }
+
+    return new Date(secondOrder.date) - new Date(firstOrder.date)
+  })
+
   return (
     <main className="dashboard">
       <header className="dashboard-header">
@@ -361,6 +388,20 @@ function App() {
             />
           </label>
 
+          <label className="sort-field">
+            <span>Sort by</span>
+            <select
+              value={sortOption}
+              onChange={(event) => setSortOption(event.target.value)}
+            >
+              <option value="newest-first">Newest first</option>
+              <option value="oldest-first">Oldest first</option>
+              <option value="amount-low-to-high">Amount: low to high</option>
+              <option value="amount-high-to-low">Amount: high to low</option>
+              <option value="client-name-az">Client name: A to Z</option>
+            </select>
+          </label>
+
           <label className="filter-field">
             <span>Status</span>
             <select
@@ -390,8 +431,8 @@ function App() {
             </thead>
 
             <tbody>
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => (
+              {sortedOrders.length > 0 ? (
+                sortedOrders.map((order) => (
                   <tr key={order.id}>
                     <td>{order.id}</td>
                     <td>{order.client}</td>

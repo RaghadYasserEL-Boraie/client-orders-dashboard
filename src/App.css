@@ -143,6 +143,7 @@ button {
 }
 
 .search-field,
+.sort-field,
 .filter-field {
   display: flex;
   flex-direction: column;
@@ -156,11 +157,13 @@ button {
   flex: 1 1 260px;
 }
 
+.sort-field,
 .filter-field {
   min-width: 180px;
 }
 
 .search-field input,
+.sort-field select,
 .filter-field select {
   width: 100%;
   padding: 12px 14px;
@@ -173,6 +176,7 @@ button {
 }
 
 .search-field input:focus,
+.sort-field select:focus,
 .filter-field select:focus {
   border-color: #6d5dfc;
   box-shadow: 0 0 0 3px rgba(109, 93, 252, 0.12);
@@ -241,6 +245,7 @@ button {
     align-items: stretch;
   }
 
+  .sort-field,
   .filter-field {
     min-width: 100%;
   }
