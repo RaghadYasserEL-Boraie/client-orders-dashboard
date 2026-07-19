@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import {
   filterAndSortOrders,
@@ -6,6 +6,7 @@ import {
   formatOrderDate,
   getNextOrderId,
   loadOrdersFromStorage,
+  removeOrderById,
   saveOrdersToStorage,
   validateOrderForm,
 } from './orderUtils'
@@ -49,6 +50,8 @@ function App() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingOrderId, setEditingOrderId] = useState(null)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [orderPendingDeletion, setOrderPendingDeletion] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [sortOption, setSortOption] = useState('newest-first')
@@ -64,6 +67,8 @@ function App() {
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const cancelDeleteButtonRef = useRef(null)
+  const deletionInProgressRef = useRef(false)
 
   useEffect(() => {
     if (!selectedOrder) {
@@ -82,6 +87,26 @@ function App() {
       window.removeEventListener('keydown', handleEscapeKey)
     }
   }, [selectedOrder])
+
+  useEffect(() => {
+    if (!orderPendingDeletion) {
+      return undefined
+    }
+
+    cancelDeleteButtonRef.current?.focus()
+
+    const handleDeleteEscapeKey = (event) => {
+      if (event.key === 'Escape' && !deletionInProgressRef.current) {
+        setOrderPendingDeletion(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleDeleteEscapeKey)
+
+    return () => {
+      window.removeEventListener('keydown', handleDeleteEscapeKey)
+    }
+  }, [orderPendingDeletion])
 
   const resetForm = () => {
     setFormData({
@@ -183,18 +208,46 @@ function App() {
     setIsFormOpen(false)
   }
 
-  const handleDeleteOrder = (orderId) => {
-    const shouldDelete = window.confirm(
-      'Are you sure you want to delete this order?'
-    )
-
-    if (!shouldDelete) {
+  const requestOrderDeletion = (order) => {
+    if (deletionInProgressRef.current) {
       return
     }
 
+    setSuccessMessage('')
+    setOrderPendingDeletion(order)
+  }
+
+  const cancelOrderDeletion = () => {
+    if (deletionInProgressRef.current) {
+      return
+    }
+
+    setOrderPendingDeletion(null)
+  }
+
+  const confirmOrderDeletion = () => {
+    if (!orderPendingDeletion || deletionInProgressRef.current) {
+      return
+    }
+
+    deletionInProgressRef.current = true
+    setIsDeleting(true)
+
+    const deletedOrder = orderPendingDeletion
+
     setOrders((currentOrders) =>
-      currentOrders.filter((order) => order.id !== orderId)
+      removeOrderById(currentOrders, deletedOrder.id)
     )
+    setSelectedOrder((currentOrder) =>
+      currentOrder?.id === deletedOrder.id ? null : currentOrder
+    )
+
+    window.setTimeout(() => {
+      setOrderPendingDeletion(null)
+      setSuccessMessage(`Order ${deletedOrder.id} deleted successfully.`)
+      deletionInProgressRef.current = false
+      setIsDeleting(false)
+    }, 0)
   }
   const closeForm = () => {
     setIsFormOpen(false)
@@ -218,6 +271,17 @@ function App() {
 
     closeOrderDetails()
     openOrderForm(orderToEdit)
+  }
+
+  const deleteSelectedOrder = () => {
+    const orderToDelete = selectedOrder
+
+    if (!orderToDelete) {
+      return
+    }
+
+    closeOrderDetails()
+    requestOrderDeletion(orderToDelete)
   }
 
   const isEditing = editingOrderId !== null
@@ -478,6 +542,67 @@ function App() {
               >
                 Edit Order
               </button>
+
+              <button
+                className="danger-button"
+                type="button"
+                onClick={deleteSelectedOrder}
+              >
+                Delete Order
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {orderPendingDeletion && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={cancelOrderDeletion}
+        >
+          <section
+            className="confirmation-modal modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-order-title"
+            aria-describedby="delete-order-description"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="confirmation-warning" aria-hidden="true">
+              !
+            </div>
+
+            <h2 id="delete-order-title">Delete Order?</h2>
+            <p id="delete-order-description">
+              This action permanently removes the selected order from the
+              dashboard.
+            </p>
+
+            <div className="confirmation-order">
+              <span>{orderPendingDeletion.id}</span>
+              <strong>{orderPendingDeletion.client}</strong>
+            </div>
+
+            <div className="confirmation-actions">
+              <button
+                ref={cancelDeleteButtonRef}
+                className="secondary-button"
+                type="button"
+                onClick={cancelOrderDeletion}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="danger-button"
+                type="button"
+                onClick={confirmOrderDeletion}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting…' : 'Delete Order'}
+              </button>
             </div>
           </section>
         </div>
@@ -591,7 +716,7 @@ function App() {
                         <button
                           className="delete-button"
                           type="button"
-                          onClick={() => handleDeleteOrder(order.id)}
+                          onClick={() => requestOrderDeletion(order)}
                         >
                           Delete
                         </button>
@@ -659,7 +784,7 @@ function App() {
                     <button
                       className="delete-button"
                       type="button"
-                      onClick={() => handleDeleteOrder(order.id)}
+                      onClick={() => requestOrderDeletion(order)}
                     >
                       Delete
                     </button>

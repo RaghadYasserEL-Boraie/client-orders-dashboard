@@ -1,5 +1,9 @@
 const STORAGE_KEY = 'client-orders-dashboard-orders'
 
+export const removeOrderById = (orders, orderId) => {
+  return orders.filter((order) => order.id !== orderId)
+}
+
 export const filterAndSortOrders = (
   orders,
   searchTerm = '',
