@@ -13,6 +13,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #f4f7fb;
+  overflow-x: hidden;
 }
 
 button {
@@ -21,9 +22,11 @@ button {
 }
 
 .dashboard {
-  width: min(1180px, calc(100% - 40px));
+  width: min(1180px, calc(100% - 32px));
+  max-width: 100%;
   margin: 0 auto;
   padding: 48px 0;
+  overflow-x: hidden;
 }
 
 .dashboard-header {
@@ -60,6 +63,7 @@ button {
 .secondary-button {
   border-radius: 12px;
   font-weight: 700;
+  min-height: 44px;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -219,13 +223,13 @@ button {
   color: #6b7280;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .dashboard {
     width: min(100% - 24px, 1180px);
     padding: 28px 0;
@@ -233,9 +237,20 @@ button {
 
   .dashboard-header {
     flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
 
-  .primary-button {
+  .dashboard-header h1 {
+    font-size: 32px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+
+  .primary-button,
+  .secondary-button {
     width: 100%;
   }
 
@@ -243,20 +258,42 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-header h1 {
-    font-size: 32px;
+  .stat-card {
+    padding: 20px;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-actions {
+    width: 100%;
+  }
+
+  .section-actions .primary-button,
+  .section-actions .secondary-button {
+    flex: 1 1 100%;
   }
 
   .orders-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .sort-field,
   .filter-field {
     min-width: 100%;
   }
+
+  .search-field input,
+  .sort-field select,
+  .filter-field select {
+    padding: 13px 14px;
+  }
 }
+
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -266,6 +303,10 @@ button {
   width: 100%;
   border-collapse: collapse;
   min-width: 760px;
+}
+
+.mobile-order-list {
+  display: none;
 }
 
 .orders-table th,
@@ -440,6 +481,7 @@ button {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  min-height: 42px;
 }
 
 .edit-button {

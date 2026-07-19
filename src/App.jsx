@@ -424,7 +424,7 @@ function App() {
         </div>
 
         <div className="table-wrapper">
-          <table className="orders-table">
+          <table className="orders-table desktop-table">
             <thead>
               <tr>
                 <th>Order ID</th>
@@ -487,6 +487,61 @@ function App() {
               )}
             </tbody>
           </table>
+
+          <div className="mobile-order-list">
+            {sortedOrders.length > 0 ? (
+              sortedOrders.map((order) => (
+                <article className="mobile-order-card" key={order.id}>
+                  <p>
+                    <strong>Order ID:</strong> {order.id}
+                  </p>
+                  <p>
+                    <strong>Client:</strong> {order.client}
+                  </p>
+                  <p>
+                    <strong>Service:</strong> {order.service}
+                  </p>
+                  <p>
+                    <strong>Date:</strong> {order.date}
+                  </p>
+                  <p>
+                    <strong>Amount:</strong> {order.amount}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{' '}
+                    <span
+                      className={`status-badge ${order.status
+                        .toLowerCase()
+                        .replace(' ', '-')}`}
+                    >
+                      {order.status}
+                    </span>
+                  </p>
+                  <div className="action-buttons">
+                    <button
+                      className="edit-button"
+                      type="button"
+                      onClick={() => openOrderForm(order)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="delete-button"
+                      type="button"
+                      onClick={() => handleDeleteOrder(order.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="empty-state">
+                <h3>No matching orders</h3>
+                <p>Try another search term or status filter.</p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </main>
