@@ -1,11 +1,81 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  filterAndSortOrders,
   getNextOrderId,
   loadOrdersFromStorage,
   saveOrdersToStorage,
   validateOrderForm,
 } from './orderUtils.js'
+
+const sampleOrders = [
+  {
+    id: '#ORD-1001',
+    client: 'Lina Ahmad',
+    service: 'Website Design',
+    date: 'Jul 14, 2026',
+    amount: '$450',
+    status: 'Pending',
+  },
+  {
+    id: '#ORD-1002',
+    client: 'Omar Khaled',
+    service: 'Landing Page',
+    date: 'Jul 13, 2026',
+    amount: '$280',
+    status: 'Completed',
+  },
+  {
+    id: '#ORD-1003',
+    client: 'Sara Ali',
+    service: 'Dashboard UI',
+    date: 'Jul 12, 2026',
+    amount: '$620',
+    status: 'In Progress',
+  },
+]
+
+test('filters orders by each status and supports All', () => {
+  assert.equal(filterAndSortOrders(sampleOrders, '', 'All').length, 3)
+  assert.deepEqual(
+    filterAndSortOrders(sampleOrders, '', 'Pending').map((order) => order.id),
+    ['#ORD-1001']
+  )
+  assert.deepEqual(
+    filterAndSortOrders(sampleOrders, '', 'In Progress').map(
+      (order) => order.id
+    ),
+    ['#ORD-1003']
+  )
+  assert.deepEqual(
+    filterAndSortOrders(sampleOrders, '', 'Completed').map((order) => order.id),
+    ['#ORD-1002']
+  )
+})
+
+test('combines status filtering with search and sorting', () => {
+  const orders = [
+    ...sampleOrders,
+    {
+      id: '#ORD-1004',
+      client: 'Maya Noor',
+      service: 'Website Audit',
+      date: 'Jul 15, 2026',
+      amount: '$200',
+      status: 'Pending',
+    },
+  ]
+
+  assert.deepEqual(
+    filterAndSortOrders(
+      orders,
+      'website',
+      'Pending',
+      'amount-low-to-high'
+    ).map((order) => order.id),
+    ['#ORD-1004', '#ORD-1001']
+  )
+})
 
 test('generates the next sequential order ID', () => {
   const orders = [{ id: '#ORD-1001' }, { id: '#ORD-1002' }, { id: '#ORD-1003' }]

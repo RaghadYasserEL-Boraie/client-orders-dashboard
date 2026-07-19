@@ -1,5 +1,52 @@
 const STORAGE_KEY = 'client-orders-dashboard-orders'
 
+export const filterAndSortOrders = (
+  orders,
+  searchTerm = '',
+  statusFilter = 'All',
+  sortOption = 'newest-first'
+) => {
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      [order.id, order.client, order.service]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch)
+    const matchesStatus =
+      statusFilter === 'All' || order.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+
+  return [...filteredOrders].sort((firstOrder, secondOrder) => {
+    if (sortOption === 'oldest-first') {
+      return new Date(firstOrder.date) - new Date(secondOrder.date)
+    }
+
+    if (sortOption === 'amount-low-to-high') {
+      return (
+        Number(firstOrder.amount.replace('$', '')) -
+        Number(secondOrder.amount.replace('$', ''))
+      )
+    }
+
+    if (sortOption === 'amount-high-to-low') {
+      return (
+        Number(secondOrder.amount.replace('$', '')) -
+        Number(firstOrder.amount.replace('$', ''))
+      )
+    }
+
+    if (sortOption === 'client-name-az') {
+      return firstOrder.client.localeCompare(secondOrder.client)
+    }
+
+    return new Date(secondOrder.date) - new Date(firstOrder.date)
+  })
+}
+
 export const validateOrderForm = (formData) => {
   const newErrors = {}
   const namePattern = /^[A-Za-z\u0600-\u06FF\s]+$/
