@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import {
+  filterAndSortOrders,
   formatDateInputValue,
   formatOrderDate,
   getNextOrderId,
@@ -174,46 +175,12 @@ function App() {
   }
 
   const isEditing = editingOrderId !== null
-  const normalizedSearch = searchTerm.trim().toLowerCase()
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      normalizedSearch.length === 0 ||
-      [order.id, order.client, order.service]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedSearch)
-
-    const matchesStatus =
-      statusFilter === 'All' || order.status === statusFilter
-
-    return matchesSearch && matchesStatus
-  })
-
-  const sortedOrders = [...filteredOrders].sort((firstOrder, secondOrder) => {
-    if (sortOption === 'oldest-first') {
-      return new Date(firstOrder.date) - new Date(secondOrder.date)
-    }
-
-    if (sortOption === 'amount-low-to-high') {
-      return (
-        Number(firstOrder.amount.replace('$', '')) -
-        Number(secondOrder.amount.replace('$', ''))
-      )
-    }
-
-    if (sortOption === 'amount-high-to-low') {
-      return (
-        Number(secondOrder.amount.replace('$', '')) -
-        Number(firstOrder.amount.replace('$', ''))
-      )
-    }
-
-    if (sortOption === 'client-name-az') {
-      return firstOrder.client.localeCompare(secondOrder.client)
-    }
-
-    return new Date(secondOrder.date) - new Date(firstOrder.date)
-  })
+  const sortedOrders = filterAndSortOrders(
+    orders,
+    searchTerm,
+    statusFilter,
+    sortOption
+  )
 
   return (
     <main className="dashboard">
