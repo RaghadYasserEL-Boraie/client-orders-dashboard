@@ -62,6 +62,8 @@ function App() {
   })
 
   const [errors, setErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (!selectedOrder) {
@@ -90,12 +92,15 @@ function App() {
       status: 'Pending',
     })
     setErrors({})
+    setFormError('')
     setEditingOrderId(null)
   }
 
   const openOrderForm = (order = null) => {
     setIsFormOpen(true)
     setErrors({})
+    setFormError('')
+    setSuccessMessage('')
 
     if (order) {
       setEditingOrderId(order.id)
@@ -124,6 +129,7 @@ function App() {
       ...currentErrors,
       [name]: '',
     }))
+    setFormError('')
   }
 
   const validateForm = () => {
@@ -140,6 +146,7 @@ function App() {
     const isValid = validateForm()
 
     if (!isValid) {
+      setFormError('Please correct the highlighted fields and try again.')
       return
     }
 
@@ -158,6 +165,7 @@ function App() {
             : order
         )
       )
+      setSuccessMessage(`Order ${editingOrderId} updated successfully.`)
     } else {
       const newOrder = {
         id: getNextOrderId(orders),
@@ -199,6 +207,17 @@ function App() {
 
   const closeOrderDetails = () => {
     setSelectedOrder(null)
+  }
+
+  const editSelectedOrder = () => {
+    const orderToEdit = selectedOrder
+
+    if (!orderToEdit) {
+      return
+    }
+
+    closeOrderDetails()
+    openOrderForm(orderToEdit)
   }
 
   const isEditing = editingOrderId !== null
@@ -246,6 +265,12 @@ function App() {
         </article>
       </section>
 
+      {successMessage && (
+        <div className="feedback-message success-message" role="status">
+          {successMessage}
+        </div>
+      )}
+
       {isFormOpen && (
         <div className="modal-backdrop" role="presentation" onClick={closeForm}>
           <section
@@ -270,6 +295,12 @@ function App() {
             </div>
 
             <form className="order-form" onSubmit={handleSubmit} noValidate>
+              {formError && (
+                <div className="feedback-message form-error-summary" role="alert">
+                  {formError}
+                </div>
+              )}
+
               <label>
                 Client Name
 
@@ -352,9 +383,19 @@ function App() {
                 </select>
               </label>
 
-              <button className="primary-button form-submit" type="submit">
-                {isEditing ? 'Save Changes' : 'Add Order'}
-              </button>
+              <div className="form-actions">
+                <button className="primary-button form-submit" type="submit">
+                  {isEditing ? 'Save Changes' : 'Add Order'}
+                </button>
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={closeForm}
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           </section>
         </div>
@@ -428,6 +469,16 @@ function App() {
                 </dd>
               </div>
             </dl>
+
+            <div className="order-details-actions">
+              <button
+                className="primary-button"
+                type="button"
+                onClick={editSelectedOrder}
+              >
+                Edit Order
+              </button>
+            </div>
           </section>
         </div>
       )}
