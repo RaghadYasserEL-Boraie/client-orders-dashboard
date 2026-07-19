@@ -35,6 +35,71 @@ const sampleOrders = [
   },
 ]
 
+test('sorts orders from newest to oldest', () => {
+  const sortedOrderIds = filterAndSortOrders(
+    sampleOrders,
+    '',
+    'All',
+    'newest-first'
+  ).map((order) => order.id)
+
+  assert.deepEqual(sortedOrderIds, [
+    '#ORD-1001',
+    '#ORD-1002',
+    '#ORD-1003',
+  ])
+})
+
+test('sorts orders from oldest to newest', () => {
+  const sortedOrderIds = filterAndSortOrders(
+    sampleOrders,
+    '',
+    'All',
+    'oldest-first'
+  ).map((order) => order.id)
+
+  assert.deepEqual(sortedOrderIds, [
+    '#ORD-1003',
+    '#ORD-1002',
+    '#ORD-1001',
+  ])
+})
+
+test('sorts orders by amount from highest to lowest', () => {
+  const sortedAmounts = filterAndSortOrders(
+    sampleOrders,
+    '',
+    'All',
+    'amount-high-to-low'
+  ).map((order) => order.amount)
+
+  assert.deepEqual(sortedAmounts, ['$620', '$450', '$280'])
+})
+
+test('sorts orders by amount from lowest to highest', () => {
+  const sortedAmounts = filterAndSortOrders(
+    sampleOrders,
+    '',
+    'All',
+    'amount-low-to-high'
+  ).map((order) => order.amount)
+
+  assert.deepEqual(sortedAmounts, ['$280', '$450', '$620'])
+})
+
+test('does not mutate the original orders array while sorting', () => {
+  const originalOrders = structuredClone(sampleOrders)
+  const sortedOrders = filterAndSortOrders(
+    sampleOrders,
+    '',
+    'All',
+    'oldest-first'
+  )
+
+  assert.notStrictEqual(sortedOrders, sampleOrders)
+  assert.deepEqual(sampleOrders, originalOrders)
+})
+
 test('filters orders by each status and supports All', () => {
   assert.equal(filterAndSortOrders(sampleOrders, '', 'All').length, 3)
   assert.deepEqual(
