@@ -4,6 +4,7 @@ import {
   filterAndSortOrders,
   getNextOrderId,
   loadOrdersFromStorage,
+  removeOrderById,
   saveOrdersToStorage,
   validateOrderForm,
 } from './orderUtils.js'
@@ -34,6 +35,29 @@ const sampleOrders = [
     status: 'In Progress',
   },
 ]
+
+test('removes only the order with the matching ID', () => {
+  const remainingOrders = removeOrderById(sampleOrders, '#ORD-1002')
+
+  assert.deepEqual(
+    remainingOrders.map((order) => order.id),
+    ['#ORD-1001', '#ORD-1003']
+  )
+})
+
+test('leaves orders unchanged when the deletion ID is unknown', () => {
+  const remainingOrders = removeOrderById(sampleOrders, '#ORD-9999')
+
+  assert.deepEqual(remainingOrders, sampleOrders)
+})
+
+test('does not mutate the original orders array when deleting', () => {
+  const originalOrders = structuredClone(sampleOrders)
+  const remainingOrders = removeOrderById(sampleOrders, '#ORD-1001')
+
+  assert.notStrictEqual(remainingOrders, sampleOrders)
+  assert.deepEqual(sampleOrders, originalOrders)
+})
 
 test('sorts orders from newest to oldest', () => {
   const sortedOrderIds = filterAndSortOrders(
