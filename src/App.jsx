@@ -48,6 +48,7 @@ function App() {
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingOrderId, setEditingOrderId] = useState(null)
+  const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [sortOption, setSortOption] = useState('newest-first')
@@ -61,6 +62,24 @@ function App() {
   })
 
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      return undefined
+    }
+
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        setSelectedOrder(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscapeKey)
+
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [selectedOrder])
 
   const resetForm = () => {
     setFormData({
@@ -172,6 +191,14 @@ function App() {
   const closeForm = () => {
     setIsFormOpen(false)
     resetForm()
+  }
+
+  const openOrderDetails = (order) => {
+    setSelectedOrder(order)
+  }
+
+  const closeOrderDetails = () => {
+    setSelectedOrder(null)
   }
 
   const isEditing = editingOrderId !== null
@@ -333,6 +360,78 @@ function App() {
         </div>
       )}
 
+      {selectedOrder && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={closeOrderDetails}
+        >
+          <section
+            className="order-details-modal modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-details-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="section-heading order-details-header">
+              <div>
+                <p className="eyebrow">Order details</p>
+                <h2 id="order-details-title">{selectedOrder.id}</h2>
+              </div>
+
+              <button
+                className="close-button"
+                type="button"
+                aria-label="Close order details"
+                onClick={closeOrderDetails}
+              >
+                ×
+              </button>
+            </div>
+
+            <dl className="order-details-grid">
+              <div className="order-detail-item">
+                <dt>Order ID</dt>
+                <dd>{selectedOrder.id}</dd>
+              </div>
+
+              <div className="order-detail-item">
+                <dt>Client Name</dt>
+                <dd>{selectedOrder.client}</dd>
+              </div>
+
+              <div className="order-detail-item order-detail-wide">
+                <dt>Service / Order Description</dt>
+                <dd>{selectedOrder.service}</dd>
+              </div>
+
+              <div className="order-detail-item">
+                <dt>Date</dt>
+                <dd>{selectedOrder.date}</dd>
+              </div>
+
+              <div className="order-detail-item">
+                <dt>Amount</dt>
+                <dd>{selectedOrder.amount}</dd>
+              </div>
+
+              <div className="order-detail-item order-detail-wide">
+                <dt>Status</dt>
+                <dd>
+                  <span
+                    className={`status-badge ${selectedOrder.status
+                      .toLowerCase()
+                      .replace(' ', '-')}`}
+                  >
+                    {selectedOrder.status}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      )}
+
       <section className="orders-section">
         <div className="section-heading">
           <h2>Recent Orders</h2>
@@ -425,6 +524,13 @@ function App() {
                     <td>
                       <div className="action-buttons">
                         <button
+                          className="view-button"
+                          type="button"
+                          onClick={() => openOrderDetails(order)}
+                        >
+                          View
+                        </button>
+                        <button
                           className="edit-button"
                           type="button"
                           onClick={() => openOrderForm(order)}
@@ -485,6 +591,13 @@ function App() {
                     </span>
                   </p>
                   <div className="action-buttons">
+                    <button
+                      className="view-button"
+                      type="button"
+                      onClick={() => openOrderDetails(order)}
+                    >
+                      View
+                    </button>
                     <button
                       className="edit-button"
                       type="button"
